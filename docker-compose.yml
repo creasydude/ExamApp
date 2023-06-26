@@ -1,0 +1,185 @@
+version: '3.3'
+services:
+  authentication-db:
+    image: mongo
+    volumes:
+      - "/var/lib/mongodb-authentication:/data/db"
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: auth
+      MONGO_INITDB_ROOT_PASSWORD: auth
+      MONGO_INITDB_DATABASE: authentication
+    container_name: examApp_authentication-db
+    ports:
+      - "27017:27017"
+    command: [
+      "mongod",
+      "--quiet",
+      "--logpath", "/var/log/mongodb/mongodb-auth.log"
+    ]
+  qbank-db:
+    image: mongo
+    volumes:
+      - "/var/lib/mongodb-qbank:/data/db"
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: qbank
+      MONGO_INITDB_ROOT_PASSWORD: qbank
+      MONGO_INITDB_DATABASE: questionbank
+    container_name: examApp_qbank-db
+    ports:
+      - "27018:27017"
+    command: [
+      "mongod",
+      "--quiet",
+      "--logpath", "/var/log/mongodb/mongodb-auth.log"
+    ]
+  schedule-db:
+    image: mongo
+    volumes:
+      - "/var/lib/mongodb-schedule:/data/db"
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: schedule
+      MONGO_INITDB_ROOT_PASSWORD: schedule
+      MONGO_INITDB_DATABASE: schedule
+    container_name: examApp_schedule-db
+    ports:
+      - "27019:27017"
+    command: [
+      "mongod",
+      "--quiet",
+      "--logpath", "/var/log/mongodb/mongodb-auth.log"
+    ]
+  exam-db:
+    image: mongo
+    volumes:
+      - "/var/lib/mongodb-exam:/data/db"
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: exam
+      MONGO_INITDB_ROOT_PASSWORD: exam
+      MONGO_INITDB_DATABASE: exam
+    container_name: examApp_exam-db
+    ports:
+      - "27020:27017"
+    command: [
+      "mongod",
+      "--quiet",
+      "--logpath", "/var/log/mongodb/mongodb-auth.log"
+    ]
+  authentication-service:
+    build:
+      context: authentication-service
+      dockerfile: Dockerfile
+      target: base #for production just use "production" instead of "base"
+    environment:
+      PORT : 5001
+      NODE_ENV : development #turn it to production / development
+      REGISTER_SECRET : ABCD
+      COOKIE_SECRET : EFGH
+      HTTPS_KEY_FILE_DIR : ./dir #Change Dir
+      HTTPS_CERTIFICATE_FILE_DIR : ./dir #Change dir
+      ACCESS_TOKEN_SECRET : HIJK
+      REFRESH_TOKEN_SECRET : LMNO
+      ACCESS_TOKEN_EXPIRE : 30m
+      REFRESH_TOKEN_EXPIRE : 30d
+      AUTH_DB_URI : mongodb://auth:auth@authentication-db
+    depends_on:
+      - authentication-db
+    volumes:
+      - ./authentication-service:/ExamApp
+    container_name: examApp_authentication-service
+    expose:
+      - "5001"
+    ports:
+      - "5001:5001"
+    command: npm install && npm run dev #for production just use "npm run start"
+  qbank-service:
+    build:
+      context: qbank-service
+      dockerfile: Dockerfile
+      target: base #for production just use "production" instead of "base"
+    environment:
+      PORT : 5002
+      NODE_ENV : development #turn it to production / development
+      COOKIE_SECRET : ABCD
+      HTTPS_KEY_FILE_DIR : ./dir #Change Dir
+      HTTPS_CERTIFICATE_FILE_DIR : ./dir #Change dir
+      QUESTION_DB_URI : mongodb://qbank:qbank@qbank-db
+      QBANK_SECRET : "ABCD"
+    depends_on :
+      - qbank-db
+    volumes:
+      - ./qbank-service:/ExamApp
+    container_name: examApp_qbank-service
+    expose:
+      - "5002"
+    ports:
+      - "5002:5002"
+    command: > #for production just use "npm run start"
+      sh -c "npm install && npm run dev && npm run test"
+  schedule-service:
+    build:
+      context: schedule-service
+      dockerfile: Dockerfile
+      target: base #for production just use "production" instead of "base"
+    environment:
+      PORT : 5003
+      NODE_ENV : development #turn it to production / development
+      COOKIE_SECRET : ABCD
+      HTTPS_KEY_FILE_DIR : ./dir #Change Dir
+      HTTPS_CERTIFICATE_FILE_DIR : ./dir #Change dir
+      SCHEDULE_DB_URI : mongodb://schedule:schedule@schedule-db
+      SCHEDULE_SECRET : EEEE
+    depends_on :
+      - schedule-db
+    volumes:
+      - ./schedule-service:/ExamApp
+    container_name: examApp_schedule-service
+    expose:
+      - "5003"
+    ports:
+      - "5003:5003"
+    command: > #for production just use "npm run start"
+      sh -c "npm install && npm run dev"
+  exam-service:
+    build:
+      context: exam-service
+      dockerfile: Dockerfile
+      target: base #for production just use "production" instead of "base"
+    environment:
+      PORT : 5004
+      NODE_ENV : development #turn it to production / development
+      HTTPS_KEY_FILE_DIR : ./dir #Change Dir
+      HTTPS_CERTIFICATE_FILE_DIR : ./dir #Change dir
+      EXAM_DB_URI : mongodb://exam:exam@exam-db
+      EXAM_SECRET : CCCC
+    depends_on :
+      - exam-db
+    volumes:
+      - ./exam-service:/ExamApp
+    container_name: examApp_exam-service
+    expose:
+      - "5004"
+    ports:
+      - "5004:5004"
+    command: > #for production just use "npm run start"
+      sh -c "npm install && npm run dev"
+  api-gateway:
+    build:
+      context: api-gateway
+      dockerfile: Dockerfile
+      target: base
+    environment:
+      PORT : 5000
+    depends_on:
+      - authentication-service
+    volumes:
+      - ./api-gateway:/ExamApp
+    container_name: examApp_api-gateway
+    expose:
+      - "5000"
+    ports:
+      - "5000:5000"
+    command: npm install && npm run dev

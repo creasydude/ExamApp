@@ -1,0 +1,37 @@
+{
+  "name": "qbank",
+  "version": "1.0.0",
+  "description": "Question Bank Microservice For ExamApp Api",
+  "scripts": {
+    "dev": "nodemon ./src/index.ts",
+    "production": "node ./build/index.js",
+    "build": "tsc -p .",
+    "test": "jest --verbose --runInBand"
+  },
+  "author": "Cr3asY",
+  "license": "ISC",
+  "devDependencies": {
+    "@jest-mock/express": "^2.0.1",
+    "@types/body-parser": "^1.19.2",
+    "@types/cookie-parser": "^1.4.3",
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.16",
+    "@types/jest": "^29.4.0",
+    "@types/jsonwebtoken": "^9.0.1",
+    "@types/node": "^18.11.18",
+    "@types/uuid": "^9.0.0",
+    "nodemon": "^2.0.20",
+    "ts-jest": "^29.0.5",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^6.9.0",
+    "uuid": "^9.0.0"
+  }
+}
